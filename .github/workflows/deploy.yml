@@ -1,0 +1,45 @@
+name: Build and Push Docker Image to Docker Hub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1: Checkout mã nguồn
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 2: Cài đặt JDK để build dự án Spring Boot
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      # Bước 3: Build dự án bằng Maven (tạo file JAR)
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # Bước 4: Đăng nhập vào Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Bước 5: Build Docker Image với tags
+      - name: Build Docker Image
+        run: |
+          docker build -t dhope14102004/demo-springboot:latest .
+          docker build -t dhope14102004/demo-springboot:${{ github.sha }} .
+
+      # Bước 6: Push Docker Image lên Docker Hub
+      - name: Push Docker Image to Docker Hub
+        run: |
+          docker push dhope14102004/demo-springboot:latest
+          docker push dhope14102004/demo-springboot:${{ github.sha }}
